@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 using System.Runtime.Caching;
 
 namespace LazyProxy
@@ -10,7 +9,7 @@ namespace LazyProxy
         private readonly MemoryCache _cache;
         private readonly TimeSpan _cacheExpirationTime;
 
-        public LazyProxy(IFactory<TRequest, TResponse> factory, TimeSpan timeout)
+        public LazyProxy(IFactory<TRequest, TResponse> factory, TimeSpan cacheExpirationTime)
         {
 #if false
             if (timeout.Equals(TimeSpan.MaxValue) || timeout.Equals(TimeSpan.MinValue))
@@ -19,11 +18,16 @@ namespace LazyProxy
             } 
 #endif
             _cache = new MemoryCache("LazyProzy.RequestCache");
-            _cacheExpirationTime = timeout.Add(TimeSpan.FromMinutes(5));
+            _cacheExpirationTime = cacheExpirationTime;
             _factory = factory;
         }
 
-        public Response<TResponse> Once(string key, TRequest request)
+        public void Delete(string key)
+        {
+            _cache.Remove(key);
+        }
+
+        public TResponse ProcessOnce(string key, TRequest request)
         {
             var val = _cache.AddOrGetExisting(key, new Lazy<TResponse>(() => _factory.Get(request)), DateTimeOffset.UtcNow.Add(_cacheExpirationTime)) as Lazy<TResponse>;
 
@@ -33,24 +37,7 @@ namespace LazyProxy
                 val = _cache.Get(key) as Lazy<TResponse>;
             }
 
-            try
-            {
-                var result = val.Value;
-                return new Response<TResponse>()
-                {
-                    Success = true,
-                    Result = result
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Response<TResponse>()
-                {
-                    Success = false,
-                    Message = string.Format("{0} - {1}", ex.GetType().FullName, ex.Message),
-                    Result = default(TResponse)
-                };
-            }
+            return val.Value;
         }
 
         

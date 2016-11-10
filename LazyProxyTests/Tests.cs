@@ -15,17 +15,18 @@ namespace LazyProxyTests
         public void Test1()
         {
             var req = new Req();
-            var proxy = new TestFactory();
-            var lazyProxy = new LazyProxy<Req,Resp>(proxy, TimeSpan.FromMinutes(2));
+            var factory = new TestFactory();
+            var lazyProxy = new LazyProxy<Req,Resp>(factory, TimeSpan.FromMinutes(2));
 
-            var tasks = new Task[100];
+            var tasks = new Task[1000];
             for (int i = 0; i < tasks.Length; i++)
             {
-                tasks[i] = Task.Run(() => lazyProxy.Once("key", req));
+                tasks[i] = Task.Run(() => lazyProxy.ProcessOnce("key", req));
             }
 
             Task.WaitAll(tasks);
-            Assert.That(tasks.All(t => (t as Task<Response<Resp>>).Result.Result.Number == 1));
+            Assert.That(tasks.All(t => (t as Task<Resp>).Result.Number == 1));
+            Assert.That(req.Number == 1);
         }
     }
 
