@@ -6,11 +6,11 @@ namespace LazyProxy
 {
     public class LazyProxy<TRequest, TResponse>
     {
-        private readonly IProxy<TRequest, TResponse> _proxy;
+        private readonly IFactory<TRequest, TResponse> _factory;
         private readonly MemoryCache _cache;
         private readonly TimeSpan _cacheExpirationTime;
 
-        public LazyProxy(IProxy<TRequest, TResponse> proxy, TimeSpan timeout)
+        public LazyProxy(IFactory<TRequest, TResponse> factory, TimeSpan timeout)
         {
 #if false
             if (timeout.Equals(TimeSpan.MaxValue) || timeout.Equals(TimeSpan.MinValue))
@@ -20,14 +20,14 @@ namespace LazyProxy
 #endif
             _cache = new MemoryCache("LazyProzy.RequestCache");
             _cacheExpirationTime = timeout.Add(TimeSpan.FromMinutes(5));
-            _proxy = proxy;
+            _factory = factory;
         }
 
         public Response<TResponse> Once(string key, TRequest request)
         {
-            var val = _cache.AddOrGetExisting(key, new Lazy<TResponse>(() => _proxy.Get(request)), DateTimeOffset.UtcNow.Add(_cacheExpirationTime)) as Lazy<TResponse>;
+            var val = _cache.AddOrGetExisting(key, new Lazy<TResponse>(() => _factory.Get(request)), DateTimeOffset.UtcNow.Add(_cacheExpirationTime)) as Lazy<TResponse>;
 
-            // the first item to insert into the cache will get a null value as return
+            // the first thread to insert into the cache will get a null value as return
             if (val == null)
             {
                 val = _cache.Get(key) as Lazy<TResponse>;

@@ -15,7 +15,7 @@ namespace LazyProxyTests
         public void Test1()
         {
             var req = new Req();
-            var proxy = new TestProxy();
+            var proxy = new TestFactory();
             var lazyProxy = new LazyProxy<Req,Resp>(proxy, TimeSpan.FromMinutes(2));
 
             var tasks = new Task[100];
@@ -29,7 +29,7 @@ namespace LazyProxyTests
         }
     }
 
-    class TestProxy : IProxy<Req, Resp>
+    class TestFactory : IFactory<Req, Resp>
     {
         public Resp Get(Req req)
         {

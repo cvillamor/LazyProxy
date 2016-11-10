@@ -41,7 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IProxy.cs" />
+    <Compile Include="IFactory.cs" />
     <Compile Include="Response.cs" />
     <Compile Include="LazyProxy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
