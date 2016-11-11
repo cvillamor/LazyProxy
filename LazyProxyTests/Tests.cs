@@ -28,7 +28,26 @@ namespace LazyProxyTests
             Assert.That(tasks.All(t => (t as Task<Resp>).Result.Number == 1));
             Assert.That(req.Number == 1);
         }
+
+        [Test]
+        public async Task Test1Async()
+        {
+            var req = new Req();
+            var factory = new TestProxy();
+            var lazyProxy = new LazyProxy<Req, Resp>(factory, TimeSpan.FromMinutes(2));
+
+            var tasks = new Task[1000];
+            for (int i = 0; i < tasks.Length; i++)
+            {
+                tasks[i] = lazyProxy.ProcessOnceAsync("key", req);
+            }
+
+            await Task.WhenAll(tasks);
+            Assert.That(tasks.All(t => (t as Task<Resp>).Result.Number == 1));
+            Assert.That(req.Number == 1);
+        }
     }
+
 
     class TestProxy : IProxy<Req, Resp>
     {

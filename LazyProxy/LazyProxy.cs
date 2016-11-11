@@ -43,7 +43,7 @@ namespace LazyProxy
             return val.Value;
         }
 
-        public async Task<TResponse> ProcessOnceAsync(string key, TRequest request, CancellationToken ct)
+        public async Task<TResponse> ProcessOnceAsync(string key, TRequest request)
         {
             var val = _cache.AddOrGetExisting(key, new AsyncLazy<TResponse>(() => _proxy.Process(request)), DateTimeOffset.UtcNow.Add(_cacheExpirationTime)) as AsyncLazy<TResponse>;
 
