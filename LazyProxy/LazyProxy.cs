@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Runtime.Caching;
+using System.Threading;
+using System.Threading.Tasks;
+using Nito.AsyncEx;
 
 namespace LazyProxy
 {
@@ -38,6 +41,19 @@ namespace LazyProxy
             }
 
             return val.Value;
+        }
+
+        public async Task<TResponse> ProcessOnceAsync(string key, TRequest request, CancellationToken ct)
+        {
+            var val = _cache.AddOrGetExisting(key, new AsyncLazy<TResponse>(() => _proxy.Process(request)), DateTimeOffset.UtcNow.Add(_cacheExpirationTime)) as AsyncLazy<TResponse>;
+
+            // the first thread to insert into the cache will get a null value as return
+            if (val == null)
+            {
+                val = _cache.Get(key) as AsyncLazy<TResponse>;
+            }
+
+            return await val;
         }
 
         
