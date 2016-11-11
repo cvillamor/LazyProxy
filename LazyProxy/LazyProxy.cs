@@ -5,11 +5,11 @@ namespace LazyProxy
 {
     public class LazyProxy<TRequest, TResponse>
     {
-        private readonly IFactory<TRequest, TResponse> _factory;
+        private readonly IProxy<TRequest, TResponse> _proxy;
         private readonly MemoryCache _cache;
         private readonly TimeSpan _cacheExpirationTime;
 
-        public LazyProxy(IFactory<TRequest, TResponse> factory, TimeSpan cacheExpirationTime)
+        public LazyProxy(IProxy<TRequest, TResponse> proxy, TimeSpan cacheExpirationTime)
         {
 #if false
             if (timeout.Equals(TimeSpan.MaxValue) || timeout.Equals(TimeSpan.MinValue))
@@ -19,7 +19,7 @@ namespace LazyProxy
 #endif
             _cache = new MemoryCache("LazyProzy.RequestCache");
             _cacheExpirationTime = cacheExpirationTime;
-            _factory = factory;
+            _proxy = proxy;
         }
 
         public void Delete(string key)
@@ -29,7 +29,7 @@ namespace LazyProxy
 
         public TResponse ProcessOnce(string key, TRequest request)
         {
-            var val = _cache.AddOrGetExisting(key, new Lazy<TResponse>(() => _factory.Get(request)), DateTimeOffset.UtcNow.Add(_cacheExpirationTime)) as Lazy<TResponse>;
+            var val = _cache.AddOrGetExisting(key, new Lazy<TResponse>(() => _proxy.Process(request)), DateTimeOffset.UtcNow.Add(_cacheExpirationTime)) as Lazy<TResponse>;
 
             // the first thread to insert into the cache will get a null value as return
             if (val == null)
