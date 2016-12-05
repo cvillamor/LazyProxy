@@ -12,29 +12,11 @@ namespace LazyProxyTests
     public class Tests
     {
         [Test]
-        public void Test1()
-        {
-            var req = new Req();
-            var factory = new TestProxy();
-            var lazyProxy = new LazyProxy<Req,Resp>(factory, TimeSpan.FromMinutes(2));
-
-            var tasks = new Task[1000];
-            for (int i = 0; i < tasks.Length; i++)
-            {
-                tasks[i] = Task.Run(() => lazyProxy.ProcessOnce("key", req));
-            }
-
-            Task.WaitAll(tasks);
-            Assert.That(tasks.All(t => (t as Task<Resp>).Result.Number == 1));
-            Assert.That(req.Number == 1);
-        }
-
-        [Test]
         public async Task Test1Async()
         {
-            var req = new Req();
+            var req = new Request();
             var factory = new TestProxy();
-            var lazyProxy = new LazyProxy<Req, Resp>(factory, TimeSpan.FromMinutes(2));
+            var lazyProxy = new LazyProxy<Request, Response>(factory, TimeSpan.FromMinutes(2));
 
             var tasks = new Task[1000];
             for (int i = 0; i < tasks.Length; i++)
@@ -43,31 +25,35 @@ namespace LazyProxyTests
             }
 
             await Task.WhenAll(tasks);
-            Assert.That(tasks.All(t => (t as Task<Resp>).Result.Number == 1));
+
+            // check that all responses have the same value of 1
+            Assert.That(tasks.All(t => (t as Task<Response>).Result.Number == 1));
+
+            // check that request has been processed only once
             Assert.That(req.Number == 1);
         }
     }
 
 
-    class TestProxy : IProxy<Req, Resp>
+    class TestProxy : IProxy<Request, Response>
     {
-        public Resp Process(Req req)
+        public async Task<Response> ProcessAsync(Request request)
         {
-            var resp = new Resp
+            var resp = new Response
             {
-                Number = ++req.Number
+                Number = ++request.Number
             };
-            Thread.Sleep(TimeSpan.FromMilliseconds(1000));
+            await Task.Delay(TimeSpan.FromMilliseconds(1000)).ConfigureAwait(false);
             return resp;
         }
     }
 
-    class Req
+    class Request
     {
         public int Number { get; set; }
     }
 
-    public class Resp
+    public class Response
     {
         public int Number { get; set; }
     }

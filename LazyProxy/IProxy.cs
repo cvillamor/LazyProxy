@@ -1,7 +1,9 @@
-﻿namespace LazyProxy
+﻿using System.Threading.Tasks;
+
+namespace LazyProxy
 {
-    public interface IProxy<in TRequest, out TResponse>
+    public interface IProxy<in TRequest, TResponse>
     {
-        TResponse Process(TRequest request);
+        Task<TResponse> ProcessAsync(TRequest request);
     }
 }
