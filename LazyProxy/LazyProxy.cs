@@ -17,11 +17,6 @@ namespace LazyProxy
             _proxy = proxy;
         }
 
-        public void Delete(string key)
-        {
-            _cache.Remove(key);
-        }
-
         public async Task<TResponse> ProcessOnceAsync(string key, TRequest request)
         {
             var val = _cache.AddOrGetExisting(key, new AsyncLazy<TResponse>(() => _proxy.ProcessAsync(request)), DateTimeOffset.UtcNow.Add(_cacheExpirationTime)) as AsyncLazy<TResponse>;
